@@ -1,0 +1,27 @@
+<h1 class="text-center">Registro de usuario</h1>
+
+<form action="/signup" method="POST" class="border" style="background-color: lightgray;">
+    <div class="mb-3">
+        <label for="email" class="form-label">Email: </label>
+        <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="password" class="form-label">Contraseña: </label>
+        <input type="password" class="form-control" id="password" name="password" required>
+    </div>
+
+    <div class="class row">
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <button class="btn btn-primary">Registrar</button>
+        </div>
+    </div>
+    
+</form>
+
+<div>
+    <h1 class="text-center">Si ya estas registrado, logueate aca: </h1>
+    <div class="d-grid gap-2 col-6 mx-auto">
+        <button onclick="location.href = 'login';" class="btn btn-primary">Loguearse</button>
+    </div>
+</div>
