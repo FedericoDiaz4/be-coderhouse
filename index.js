@@ -6,6 +6,8 @@ import session  from 'express-session';
 import connectMongo from 'connect-mongo';
 import passport  from 'passport';
 import { engine } from 'express-handlebars';
+import { config as dotEnvConfig } from 'dotenv';
+import yargs from 'yargs';
 
 //imports routes propios.
 import routerLogin  from './routes/login.js';
@@ -14,6 +16,8 @@ import routerProductosTest from './routes/productosTest.js';
 import routerFailLogin from './routes/failLogin.js';
 import routerFailSignup from './routes/failSignup.js';
 import routerLogout from './routes/logout.js';
+import routerInfo from './routes/info.js';
+import routerRandoms from './routes/randoms.js';
 
 //imports modulos propios propios.
 import authUser from './passport/authUser.js';
@@ -28,6 +32,7 @@ import User from './models/User.js';
 const app = express();
 const httpServer = new HttpServer(app);
 const io = new IOServer(httpServer);
+dotEnvConfig();
 
 ConectarDB();
 
@@ -47,11 +52,11 @@ app.set("views", "./views");
 //objeto con la info de la session.
 const sessionData = session({
     store: new connectMongo({
-        mongoUrl: 'mongodb+srv://root:q1w2e3r4@cluster0.dxsuj0e.mongodb.net/?retryWrites=true&w=majority',
+        mongoUrl: process.env.DB,
         useNewUrlParser: true,
         useUnifiedTopology: true
     }),
-    secret: 'secret',
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -78,6 +83,8 @@ app.use('/api/productos-test', routerProductosTest);
 app.use('/faillogin', routerFailLogin);
 app.use('/failsignup', routerFailSignup);
 app.use('/logout', routerLogout);
+app.use('/info', routerInfo);
+app.use('/api/randoms', routerRandoms);
 
 //middleware para usar las sesiones en los sockets.
 const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
@@ -131,7 +138,8 @@ io.on('connection', async socket => {
 });
 
 //iniciacion de srv.
-const PORT = process.env.PORT || 8080;
+const args = yargs(process.argv.slice(2)).argv;
+const PORT = args.port || 8080;
 const server = httpServer.listen(PORT, () => {
     console.log(`Servidor levantado en puerto ${PORT}`)
 })

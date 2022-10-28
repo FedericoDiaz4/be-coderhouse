@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const ConectarDb = () => {
                
-    mongoose.connect("mongodb+srv://root:q1w2e3r4@cluster0.dxsuj0e.mongodb.net/?retryWrites=true&w=majority", 
+    mongoose.connect(process.env.DB, 
     {
         useNewUrlParser: true,
         useUnifiedTopology: true    
