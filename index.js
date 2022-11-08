@@ -8,6 +8,8 @@ import passport  from 'passport';
 import { engine } from 'express-handlebars';
 import { config as dotEnvConfig } from 'dotenv';
 import yargs from 'yargs';
+import cluster from 'cluster';
+import { cpus } from 'os';
 
 //imports routes propios.
 import routerLogin  from './routes/login.js';
@@ -92,6 +94,7 @@ io.use(wrap(sessionData));
 
 //conexion del socket. Si no existe la session redirecciona al login.
 io.on('connection', async socket => {
+    console.log(PORT);
     const session = socket.request.session.passport;
     if (!session) {
         socket.emit('redirect', '/login');
@@ -140,10 +143,37 @@ io.on('connection', async socket => {
 //iniciacion de srv.
 const args = yargs(process.argv.slice(2)).argv;
 const PORT = args.port || 8080;
-const server = httpServer.listen(PORT, () => {
-    console.log(`Servidor levantado en puerto ${PORT}`)
-})
+const type = args.type || "FORK";
+console.log(PORT);
 
-server.on('error', error => {
-    console.log(error);
-})
+if (type == "FORK") {
+    
+    const server = httpServer.listen(PORT, () => {
+        console.log(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
+    })
+    
+    server.on('error', error => {
+        console.log(error);
+    })
+
+} else if (type == "CLUSTER") {
+    if (cluster.isPrimary) {
+        const cantCpus = cpus().length;
+        for (let i = 0; i < cantCpus ; i++) {
+            cluster.fork();
+        }
+        
+        cluster.on('exit', (worker, code, signal) => {
+            console.log(`worker ${worker.process.pid} died`);
+            cluster.fork();
+        }) 
+    } else {
+        const server = httpServer.listen(PORT, () => {
+            console.log(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
+        })
+        
+        server.on('error', error => {
+            console.log(error);
+        })
+    }
+}

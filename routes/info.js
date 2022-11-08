@@ -1,4 +1,5 @@
 import express from "express";
+import { cpus } from 'os';
 
 const routerInfo = express.Router();
 
@@ -10,7 +11,8 @@ routerInfo.get('/',  (req, res) => {
         pid: process.pid,
         node: process.version,
         folder: process.cwd(),
-        memoryRss: process.memoryUsage().rss
+        memoryRss: process.memoryUsage().rss,
+        cpus: cpus().length
     };
     res.json(info)
 });
