@@ -1,0 +1,3 @@
+{"level":"warn","message":"Peticion GET en ruta:  no existe."}
+{"level":"warn","message":"Peticion GET en ruta: [object Object] no existe."}
+{"level":"warn","message":"Ruta solicitada inexistente"}

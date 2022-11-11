@@ -29,6 +29,7 @@ import ContenedorMongoDB from './contenedores/contenedorMongo.js';
 import { productosCollection, productosSchema } from './models/productos.js';
 import { mensajesCollection, mensajesSchema } from './models/mensajes.js';
 import User from './models/User.js';
+import logger from './loggers/winston.js';
 
 
 const app = express();
@@ -94,7 +95,6 @@ io.use(wrap(sessionData));
 
 //conexion del socket. Si no existe la session redirecciona al login.
 io.on('connection', async socket => {
-    console.log(PORT);
     const session = socket.request.session.passport;
     if (!session) {
         socket.emit('redirect', '/login');
@@ -103,12 +103,15 @@ io.on('connection', async socket => {
         const contenedorMongoMensajes = new ContenedorMongoDB(mensajesCollection, mensajesSchema);
         const idUser = session.user;
         const user = await User.findById(idUser).exec();
-        console.log(`Usuario: ${user.email} conectado`);
-        const productos = await contenedorMongoProductos.getAll();
-        const mensajes = await contenedorMongoMensajes.getAll();
-        socket.emit('newSession', user.email);
-        socket.emit("getProductos", productos);
-        socket.emit("getMensajes", mensajes);
+        try {
+            const productos = await contenedorMongoProductos.getAll();
+            const mensajes = await contenedorMongoMensajes.getAll();
+            socket.emit('newSession', user.email);
+            socket.emit("getProductos", productos);
+            socket.emit("getMensajes", mensajes);   
+        } catch (error) {
+            logger.error(error);
+        }
 
         //producto nuevo, si la sesion expiro, redirecciona al login.
         socket.on('addProducto', async prod => {
@@ -116,11 +119,15 @@ io.on('connection', async socket => {
             if (new Date() > session.cookie._expires) {
                 socket.emit('redirect', '/login');
             } else {
-                console.log("Agregando producto...");
-                await contenedorMongoProductos.addData(prod);
-                console.log("Producto Agregado.");
-                const productos = await contenedorMongoProductos.getAll();
-                io.sockets.emit('getProductos', productos);
+                try {
+                    logger.info("Agregando producto...");
+                    await contenedorMongoProductos.addData(prod);
+                    logger.info("Producto Agregado.");
+                    const productos = await contenedorMongoProductos.getAll();
+                    io.sockets.emit('getProductos', productos);   
+                } catch (error) {
+                    logger.error(error);
+                }
             }
         });
 
@@ -130,30 +137,40 @@ io.on('connection', async socket => {
             if (new Date() > session.cookie._expires) {
                 socket.emit('redirect', '/login');
             } else {
-                console.log("Agregando Mensaje...");
-                await contenedorMongoMensajes.addData(msj);
-                console.log("Mensaje Agregado");
-                const mensajes = await contenedorMongoMensajes.getAll();
-                io.sockets.emit('getMensajes', mensajes);
+                try {
+                    logger.info("Agregando Mensaje...");
+                    await contenedorMongoMensajes.addData(msj);
+                    logger.info("Mensaje Agregado");
+                    const mensajes = await contenedorMongoMensajes.getAll();
+                    io.sockets.emit('getMensajes', mensajes);   
+                } catch (error) {
+                    logger.error(error);
+                }
             }
         });
     }
+});
+
+app.get('/*', (req,res) => {
+    logger.info(`Ruta solicitada inexistente`);
+    logger.warn(`Ruta solicitada inexistente`);
+    res.redirect('/');
 });
 
 //iniciacion de srv.
 const args = yargs(process.argv.slice(2)).argv;
 const PORT = args.port || 8080;
 const type = args.type || "FORK";
-console.log(PORT);
+logger.info(PORT);
 
 if (type == "FORK") {
     
     const server = httpServer.listen(PORT, () => {
-        console.log(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
+        logger.info(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
     })
     
     server.on('error', error => {
-        console.log(error);
+        logger.info(error);
     })
 
 } else if (type == "CLUSTER") {
@@ -164,16 +181,16 @@ if (type == "FORK") {
         }
         
         cluster.on('exit', (worker, code, signal) => {
-            console.log(`worker ${worker.process.pid} died`);
+            logger.info(`worker ${worker.process.pid} died`);
             cluster.fork();
         }) 
     } else {
         const server = httpServer.listen(PORT, () => {
-            console.log(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
+            logger.info(`Servidor levantado en puerto ${PORT} con pid ${process.pid} en modo ${type}`);
         })
         
         server.on('error', error => {
-            console.log(error);
+            logger.info(error);
         })
     }
 }
