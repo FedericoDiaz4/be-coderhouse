@@ -17,10 +17,26 @@ routerInfo.get('/', (req, res) => {
         memoryRss: process.memoryUsage().rss,
         cpus: cpus().length
     };
+    res.send(info);
+});
+
+routerInfo.get('/con-log', (req, res) => {
+    logger.info(`Peticion ${req.method} en ruta: ${req.baseUrl}`);
+    const info = {
+        args: process.argv.slice(2),
+        path: process.argv[1],
+        so: process.platform,
+        pid: process.pid,
+        node: process.version,
+        folder: process.cwd(),
+        memoryRss: process.memoryUsage().rss,
+        cpus: cpus().length
+    };
+    console.log(info);
     res.send(info)
 });
 
-routerInfo.get('/con-compression', compression({level: 8}), (req, res) => {
+routerInfo.get('/con-compression', (req, res) => {
     logger.info(`Peticion ${req.method} en ruta: ${req.baseUrl}`);
     const info = {
         args: process.argv.slice(2),
