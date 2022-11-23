@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "node benchmark.js",
-    "start": "0x index.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
