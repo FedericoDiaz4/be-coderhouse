@@ -159,7 +159,7 @@ app.get('/*', (req,res) => {
 
 //iniciacion de srv.
 const args = yargs(process.argv.slice(2)).argv;
-const PORT = args.port || 8080;
+const PORT = args.port || process.env.PORT;
 const type = args.type || "FORK";
 logger.info(PORT);
 
